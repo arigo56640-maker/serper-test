@@ -1,0 +1,4 @@
+flask
+crewai
+crewai-tools
+python-dotenv

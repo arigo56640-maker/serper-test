@@ -105,5 +105,6 @@ def clear_history():
 
 
 if __name__ == '__main__':
-    print("פותח את הטרמינל בדפדפן על http://localhost:5000")
-    app.run(debug=False, port=5000, threaded=True)
+    port = int(os.environ.get('PORT', 5000))
+    print(f"פותח את הטרמינל בדפדפן על http://localhost:{port}")
+    app.run(debug=False, host='0.0.0.0', port=port, threaded=True)
