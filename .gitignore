@@ -1,0 +1,6 @@
+.env
+search_history.json
+__pycache__/
+*.pyc
+*.pyo
+.DS_Store

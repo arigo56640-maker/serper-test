@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="he">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>חדשות טכנולוגיה ישראלית</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: #0a0a0f;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      min-height: 100dvh;
+      font-family: 'Consolas', 'Courier New', monospace;
+      padding: 16px;
+    }
+
+    .window {
+      width: 100%;
+      max-width: 900px;
+      height: calc(100vh - 32px);
+      height: calc(100dvh - 32px);
+      background: #111118;
+      border-radius: 12px;
+      border: 1px solid #2a2a3a;
+      box-shadow: 0 0 60px rgba(56, 189, 248, 0.06), 0 20px 60px rgba(0,0,0,0.8);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .titlebar {
+      background: #1a1a28;
+      padding: 12px 14px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      border-bottom: 1px solid #2a2a3a;
+      flex-shrink: 0;
+    }
+
+    .dots { display: flex; gap: 7px; }
+    .dot { width: 12px; height: 12px; border-radius: 50%; }
+    .dot-red    { background: #ff5f57; }
+    .dot-yellow { background: #ffbd2e; }
+    .dot-green  { background: #28c840; }
+
+    .titlebar-label {
+      flex: 1;
+      text-align: center;
+      font-size: 12px;
+      color: #555570;
+      letter-spacing: 0.3px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    @media (max-width: 480px) {
+      .dots { display: none; }
+      .titlebar-label { font-size: 13px; color: #6b7280; text-align: right; direction: rtl; }
+    }
+
+    .status-dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: #38bdf8;
+      box-shadow: 0 0 6px #38bdf8;
+      transition: all 0.3s;
+    }
+    .status-dot.busy {
+      background: #facc15;
+      box-shadow: 0 0 6px #facc15;
+      animation: pulse 1s infinite;
+    }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+
+    .output {
+      flex: 1;
+      overflow-y: auto;
+      padding: 14px 16px;
+      scroll-behavior: smooth;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .output::-webkit-scrollbar { width: 4px; }
+    .output::-webkit-scrollbar-track { background: transparent; }
+    .output::-webkit-scrollbar-thumb { background: #2a2a3a; border-radius: 3px; }
+
+    .line {
+      font-size: 14px;
+      line-height: 1.7;
+      white-space: pre-wrap;
+      word-break: break-word;
+      padding: 1px 0;
+    }
+
+    @media (max-width: 480px) {
+      .line { font-size: 13px; }
+    }
+
+    .line.rtl { direction: rtl; text-align: right; }
+    .line.ltr { direction: ltr; text-align: left; }
+    .line.welcome  { color: #38bdf8; }
+    .line.system   { color: #818cf8; }
+    .line.info     { color: #64748b; }
+    .line.separator{ color: #1e293b; }
+    .line.error    { color: #f87171; }
+    .line.default  { color: #94a3b8; }
+
+    /* News item styling */
+    .news-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      direction: rtl;
+      padding: 12px 0;
+      border-bottom: 1px solid #1e293b;
+      animation: fadeIn 0.3s ease;
+    }
+    .news-item:last-child { border-bottom: none; }
+    @keyframes fadeIn { from{opacity:0;transform:translateY(4px)} to{opacity:1;transform:translateY(0)} }
+
+    .news-num {
+      color: #38bdf8;
+      font-size: 13px;
+      flex-shrink: 0;
+      width: 18px;
+      padding-top: 2px;
+    }
+
+    .news-body { flex: 1; min-width: 0; }
+
+    .site-badge {
+      display: inline-block;
+      background: #0f172a;
+      border: 1px solid #38bdf8;
+      color: #38bdf8;
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 4px;
+      margin-bottom: 5px;
+      letter-spacing: 0.3px;
+      max-width: 100%;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .news-text {
+      color: #e2e8f0;
+      font-size: 14px;
+      line-height: 1.65;
+      direction: rtl;
+      word-break: break-word;
+    }
+
+    @media (max-width: 480px) {
+      .news-text { font-size: 15px; }
+      .news-item { padding: 14px 0; gap: 8px; }
+    }
+
+    .loader {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      direction: rtl;
+      padding: 14px 0;
+    }
+    .loader-spinner {
+      width: 18px; height: 18px;
+      border: 2px solid #1e3a4f;
+      border-top-color: #38bdf8;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      flex-shrink: 0;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .loader-text {
+      color: #38bdf8;
+      font-size: 14px;
+    }
+    .loader-dots::after {
+      content: '';
+      animation: dots 1.5s steps(4, end) infinite;
+    }
+    @keyframes dots {
+      0%   { content: ''; }
+      25%  { content: '.'; }
+      50%  { content: '..'; }
+      75%  { content: '...'; }
+      100% { content: ''; }
+    }
+
+    .inputbar {
+      border-top: 1px solid #2a2a3a;
+      background: #0e0e18;
+      padding: 12px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      flex-shrink: 0;
+    }
+
+    .inputbar-bottom {
+      display: flex;
+      justify-content: flex-end;
+    }
+
+    #runBtn {
+      background: #0ea5e9;
+      color: #000;
+      border: none;
+      padding: 11px 20px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-family: inherit;
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: 0.3px;
+      transition: background 0.2s, transform 0.1s;
+      flex-shrink: 0;
+      white-space: nowrap;
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
+    }
+
+    #runBtn:hover:not(:disabled) { background: #38bdf8; transform: translateY(-1px); }
+    #runBtn:active:not(:disabled) { transform: scale(0.97); }
+    #runBtn:disabled {
+      background: #0f2030;
+      color: #1e3a4f;
+      cursor: not-allowed;
+    }
+
+    @media (max-width: 480px) {
+      #runBtn { padding: 13px 22px; font-size: 15px; border-radius: 10px; }
+    }
+
+    #clearBtn {
+      background: transparent;
+      color: #475569;
+      border: 1px solid #2a2a3a;
+      padding: 11px 14px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-family: inherit;
+      font-size: 13px;
+      transition: all 0.2s;
+      flex-shrink: 0;
+      white-space: nowrap;
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
+    }
+    #clearBtn:hover { border-color: #f87171; color: #f87171; }
+    #clearBtn:active { transform: scale(0.97); }
+    #clearBtn:disabled { opacity: 0.3; cursor: not-allowed; }
+
+    #clearScreenBtn {
+      background: transparent;
+      color: #475569;
+      border: 1px solid #2a2a3a;
+      padding: 11px 14px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-family: inherit;
+      font-size: 13px;
+      transition: all 0.2s;
+      flex-shrink: 0;
+      white-space: nowrap;
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
+    }
+    #clearScreenBtn:hover { border-color: #38bdf8; color: #38bdf8; }
+    #clearScreenBtn:active { transform: scale(0.97); }
+
+    @media (max-width: 480px) {
+      #clearBtn { padding: 10px 14px; font-size: 13px; border-radius: 8px; }
+    }
+
+    .topics-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+    }
+
+    @media (max-width: 480px) {
+      .topics-grid { grid-template-columns: repeat(2, 1fr); gap: 7px; }
+    }
+
+    .topic-btn {
+      background: #1a1a28;
+      color: #94a3b8;
+      border: 1px solid #2a2a3a;
+      padding: 11px 8px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-family: inherit;
+      font-size: 13px;
+      direction: rtl;
+      transition: all 0.2s;
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
+      white-space: nowrap;
+    }
+
+    .topic-btn:hover:not(:disabled) {
+      background: #0f172a;
+      border-color: #38bdf8;
+      color: #e2e8f0;
+    }
+
+    .topic-btn.active {
+      background: #0f172a;
+      border-color: #38bdf8;
+      color: #38bdf8;
+    }
+
+    .topic-btn:active:not(:disabled) { transform: scale(0.96); }
+
+    .topic-btn:disabled {
+      opacity: 0.35;
+      cursor: not-allowed;
+    }
+
+    @media (max-width: 480px) {
+      .topic-btn { padding: 13px 6px; font-size: 13px; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="window">
+
+  <div class="titlebar">
+    <div class="dots">
+      <div class="dot dot-red"></div>
+      <div class="dot dot-yellow"></div>
+      <div class="dot dot-green"></div>
+    </div>
+    <span class="titlebar-label">AI News Agent</span>
+    <div class="status-dot" id="statusDot"></div>
+  </div>
+
+  <div class="output" id="output">
+    <div class="line separator ltr">────────────────────────────────────────────</div>
+  </div>
+
+  <div class="inputbar">
+    <div class="topics-grid">
+      <button class="topic-btn" onclick="runSearch('חדשות טכנולוגיה', this)">💻 טכנולוגיה</button>
+      <button class="topic-btn" onclick="runSearch('חדשות ביטחוניות', this)">🛡️ ביטחון</button>
+      <button class="topic-btn" onclick="runSearch('חדשות ספורט', this)">⚽ ספורט</button>
+      <button class="topic-btn" onclick="runSearch('חדשות תרבות', this)">🎭 תרבות</button>
+      <button class="topic-btn" onclick="runSearch('חדשות כלכלה', this)">📈 כלכלה</button>
+      <button class="topic-btn" onclick="runSearch('חדשות פוליטיקה', this)">🏛️ פוליטיקה</button>
+    </div>
+    <div class="inputbar-bottom">
+      <button id="clearScreenBtn" onclick="clearScreen()">נקה מסך</button>
+      <button id="clearBtn" onclick="clearHistory()">מחק היסטוריה</button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  const output    = document.getElementById('output');
+  const statusDot = document.getElementById('statusDot');
+
+  let eventSource = null;
+  let newsCount   = 0;
+
+  function topicBtns() { return document.querySelectorAll('.topic-btn'); }
+
+  function isHebrew(text) {
+    return /[֐-׿]/.test(text);
+  }
+
+  // Detect news result lines: [site.co.il] text
+  function parseNewsLine(text) {
+    const m = text.match(/^\[([^\]]+)\]\s+(.+)/);
+    if (m) return { site: m[1].trim(), update: m[2].trim() };
+    return null;
+  }
+
+  function appendLine(text) {
+    const news = parseNewsLine(text);
+    if (news) {
+      newsCount++;
+      const item = document.createElement('div');
+      item.className = 'news-item';
+      item.innerHTML = `
+        <div class="news-num">${newsCount}.</div>
+        <div class="news-body">
+          <div><span class="site-badge">${escapeHtml(news.site)}</span></div>
+          <div class="news-text">${escapeHtml(news.update)}</div>
+        </div>`;
+      output.appendChild(item);
+    } else {
+      const div = document.createElement('div');
+      const dir = isHebrew(text) ? 'rtl' : 'ltr';
+      div.className = `line default ${dir}`;
+
+      if (text.includes('אתרים:') || text.includes('נושא:')) div.classList.replace('default', 'system');
+      if (text.includes('===') || text.includes('───')) div.classList.replace('default', 'separator');
+      if (text.startsWith('SITES_EXHAUSTED:')) {
+        div.classList.replace('default', 'error');
+        div.textContent = text.replace('SITES_EXHAUSTED: ', '');
+        output.appendChild(div);
+        output.scrollTop = output.scrollHeight;
+        return;
+      }
+
+      div.textContent = text;
+      output.appendChild(div);
+    }
+    output.scrollTop = output.scrollHeight;
+  }
+
+  function escapeHtml(str) {
+    return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  function setBusy(busy, activeBtn) {
+    topicBtns().forEach(b => {
+      b.disabled = busy;
+      b.classList.remove('active');
+    });
+    document.getElementById('clearBtn').disabled = busy;
+    if (busy && activeBtn) activeBtn.classList.add('active');
+    statusDot.className = 'status-dot' + (busy ? ' busy' : '');
+  }
+
+  function runSearch(topic, btn) {
+    const activeBtn = btn || event?.currentTarget;
+    setBusy(true, activeBtn);
+    newsCount = 0;
+
+    const sep = document.createElement('div');
+    sep.className = 'line separator ltr';
+    sep.textContent = '────────────────────────────────────────────';
+    output.appendChild(sep);
+
+    const echo = document.createElement('div');
+    echo.className = 'line system rtl';
+    echo.textContent = `❯ מחפש ${topic}...`;
+    output.appendChild(echo);
+
+    const cursorLine = document.createElement('div');
+    cursorLine.className = 'loader';
+    cursorLine.id = 'cursorLine';
+    cursorLine.innerHTML = '<div class="loader-spinner"></div><span class="loader-text">מחפש חדשות<span class="loader-dots"></span></span>';
+    output.appendChild(cursorLine);
+    output.scrollTop = output.scrollHeight;
+
+    if (eventSource) { eventSource.close(); eventSource = null; }
+
+    eventSource = new EventSource('/stream');
+
+    eventSource.onmessage = (e) => {
+      const data = JSON.parse(e.data);
+      if (data.done) {
+        const cur = document.getElementById('cursorLine');
+        if (cur) cur.remove();
+
+        const done = document.createElement('div');
+        done.className = 'line welcome rtl';
+        done.textContent = `✦ הסתיים — נמצאו ${newsCount} חדשות`;
+        output.appendChild(done);
+
+        output.scrollTop = output.scrollHeight;
+        eventSource.close();
+        eventSource = null;
+        setBusy(false, null);
+        return;
+      }
+      if (data.line) {
+        const cur = document.getElementById('cursorLine');
+        const el = createLineEl(data.line);
+        if (cur) output.insertBefore(el, cur);
+        else output.appendChild(el);
+        output.scrollTop = output.scrollHeight;
+      }
+    };
+
+    eventSource.onerror = () => {
+      const cur = document.getElementById('cursorLine');
+      if (cur) cur.remove();
+      const err = document.createElement('div');
+      err.className = 'line error rtl';
+      err.textContent = 'שגיאה בחיבור לשרת';
+      output.appendChild(err);
+      if (eventSource) { eventSource.close(); eventSource = null; }
+      setBusy(false, null);
+    };
+
+    fetch('/run', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ topic })
+    }).catch(() => {
+      const cur = document.getElementById('cursorLine');
+      if (cur) cur.remove();
+      setBusy(false, null);
+    });
+  }
+
+  function createLineEl(text) {
+    const news = parseNewsLine(text);
+    if (news) {
+      newsCount++;
+      const item = document.createElement('div');
+      item.className = 'news-item';
+      item.innerHTML = `
+        <div class="news-num">${newsCount}.</div>
+        <div class="news-body">
+          <div><span class="site-badge">${escapeHtml(news.site)}</span></div>
+          <div class="news-text">${escapeHtml(news.update)}</div>
+        </div>`;
+      return item;
+    }
+    const div = document.createElement('div');
+    const dir = isHebrew(text) ? 'rtl' : 'ltr';
+    div.className = `line default ${dir}`;
+    if (text.includes('אתרים:') || text.includes('נושא:')) div.classList.replace('default', 'system');
+    if (text.includes('===') || text.includes('───')) div.classList.replace('default', 'separator');
+    if (text.startsWith('SITES_EXHAUSTED:')) {
+      div.classList.replace('default', 'error');
+      div.textContent = text.replace('SITES_EXHAUSTED: ', '');
+      return div;
+    }
+    div.textContent = text;
+    return div;
+  }
+
+  function clearScreen() {
+    output.innerHTML = '';
+  }
+
+  function clearHistory() {
+    fetch('/clear-history', { method: 'DELETE' })
+      .then(r => r.json())
+      .then(data => {
+        const div = document.createElement('div');
+        div.className = 'line system rtl';
+        div.textContent = data.status === 'deleted'
+          ? '✓ ההיסטוריה נמחקה — כל האתרים זמינים שוב'
+          : '— לא נמצא קובץ היסטוריה';
+        output.appendChild(div);
+        output.scrollTop = output.scrollHeight;
+      });
+  }
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && !runBtn.disabled) runSearch();
+  });
+</script>
+
+</body>
+</html>
