@@ -262,11 +262,11 @@
       background: transparent;
       color: #475569;
       border: 1px solid #2a2a3a;
-      padding: 11px 14px;
-      border-radius: 8px;
+      padding: 4px 10px;
+      border-radius: 5px;
       cursor: pointer;
       font-family: inherit;
-      font-size: 13px;
+      font-size: 11px;
       transition: all 0.2s;
       flex-shrink: 0;
       white-space: nowrap;
@@ -341,6 +341,7 @@
       <div class="dot dot-green"></div>
     </div>
     <span class="titlebar-label">AI News Agent</span>
+    <button id="clearScreenBtn" onclick="clearScreen()">נקה מסך</button>
     <div class="status-dot" id="statusDot"></div>
   </div>
 
@@ -358,7 +359,6 @@
       <button class="topic-btn" onclick="runSearch('חדשות פוליטיקה', this)">🏛️ פוליטיקה</button>
     </div>
     <div class="inputbar-bottom">
-      <button id="clearScreenBtn" onclick="clearScreen()">נקה מסך</button>
       <button id="clearBtn" onclick="clearHistory()">מחק היסטוריה</button>
     </div>
   </div>
