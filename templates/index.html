@@ -3,287 +3,360 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>חדשות טכנולוגיה ישראלית</title>
+  <title>חדשות ישראל AI</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700;800&family=Assistant:wght@300;400;600&display=swap" rel="stylesheet">
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
+    :root {
+      --bg:          #eeebe5;
+      --card:        #ffffff;
+      --header:      #1a1a2e;
+      --header-2:    #16213e;
+      --border:      #ddd9d0;
+      --text-1:      #1a1a2e;
+      --text-2:      #6b7280;
+      --text-3:      #9ca3af;
+      --shadow-sm:   0 1px 3px rgba(0,0,0,0.07), 0 1px 2px rgba(0,0,0,0.04);
+      --shadow-md:   0 4px 16px rgba(0,0,0,0.09), 0 1px 4px rgba(0,0,0,0.05);
+
+      /* Category colors */
+      --tech:     #2563eb;
+      --security: #7c3aed;
+      --sports:   #059669;
+      --culture:  #d97706;
+      --economy:  #0891b2;
+      --politics: #dc2626;
+    }
+
     body {
-      background: #0a0a0f;
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      background: var(--bg);
       min-height: 100vh;
       min-height: 100dvh;
-      font-family: 'Consolas', 'Courier New', monospace;
-      padding: 16px;
+      font-family: 'Heebo', 'Arial Hebrew', sans-serif;
+      color: var(--text-1);
+      display: flex;
+      align-items: stretch;
+      justify-content: center;
     }
 
-    .window {
+    .app {
       width: 100%;
-      max-width: 900px;
-      height: calc(100vh - 32px);
-      height: calc(100dvh - 32px);
-      background: #111118;
-      border-radius: 12px;
-      border: 1px solid #2a2a3a;
-      box-shadow: 0 0 60px rgba(56, 189, 248, 0.06), 0 20px 60px rgba(0,0,0,0.8);
+      max-width: 760px;
+      min-height: 100vh;
+      min-height: 100dvh;
       display: flex;
       flex-direction: column;
-      overflow: hidden;
+      background: var(--bg);
     }
 
-    .titlebar {
-      background: #1a1a28;
-      padding: 12px 14px;
+    /* ── HEADER ───────────────────────────────────────── */
+    .header {
+      background: var(--header);
+      flex-shrink: 0;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    .header-main {
+      padding: 14px 20px 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      direction: rtl;
+    }
+
+    .brand {
       display: flex;
       align-items: center;
       gap: 10px;
-      border-bottom: 1px solid #2a2a3a;
+    }
+
+    .brand-icon {
+      width: 34px;
+      height: 34px;
+      background: linear-gradient(135deg, #2563eb, #7c3aed);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 17px;
       flex-shrink: 0;
     }
 
-    .dots { display: flex; gap: 7px; }
-    .dot { width: 12px; height: 12px; border-radius: 50%; }
-    .dot-red    { background: #ff5f57; }
-    .dot-yellow { background: #ffbd2e; }
-    .dot-green  { background: #28c840; }
-
-    .titlebar-label {
-      flex: 1;
-      text-align: center;
-      font-size: 12px;
-      color: #555570;
-      letter-spacing: 0.3px;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
+    .brand-text {
+      display: flex;
+      flex-direction: column;
+      gap: 1px;
     }
 
-    @media (max-width: 480px) {
-      .dots { display: none; }
-      .titlebar-label { font-size: 13px; color: #6b7280; text-align: right; direction: rtl; }
+    .brand-name {
+      font-size: 17px;
+      font-weight: 800;
+      color: #ffffff;
+      line-height: 1;
+      letter-spacing: -0.02em;
+    }
+
+    .brand-sub {
+      font-size: 10px;
+      font-weight: 300;
+      color: rgba(255,255,255,0.45);
+      letter-spacing: 0.05em;
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .status-badge {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(255,255,255,0.07);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 20px;
+      padding: 5px 11px;
     }
 
     .status-dot {
-      width: 8px; height: 8px; border-radius: 50%;
-      background: #38bdf8;
-      box-shadow: 0 0 6px #38bdf8;
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #34d399;
+      box-shadow: 0 0 6px #34d399;
       transition: all 0.3s;
     }
-    .status-dot.busy {
-      background: #facc15;
-      box-shadow: 0 0 6px #facc15;
-      animation: pulse 1s infinite;
-    }
-    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
 
-    .output {
+    .status-dot.busy {
+      background: #fbbf24;
+      box-shadow: 0 0 8px #fbbf24;
+      animation: pulse 1.1s ease-in-out infinite;
+    }
+
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.35} }
+
+    .status-text {
+      font-size: 11px;
+      font-weight: 500;
+      color: rgba(255,255,255,0.65);
+      min-width: 32px;
+    }
+
+    .btn-clear-screen {
+      background: rgba(255,255,255,0.07);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 6px;
+      color: rgba(255,255,255,0.45);
+      font-size: 11px;
+      font-family: inherit;
+      padding: 5px 10px;
+      cursor: pointer;
+      transition: all 0.2s;
+      white-space: nowrap;
+    }
+
+    .btn-clear-screen:hover { color: rgba(255,255,255,0.8); background: rgba(255,255,255,0.12); }
+
+    .header-date {
+      background: var(--header-2);
+      padding: 6px 20px;
+      font-size: 11px;
+      font-weight: 300;
+      color: rgba(255,255,255,0.35);
+      direction: rtl;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      border-top: 1px solid rgba(255,255,255,0.05);
+    }
+
+    .header-date::before {
+      content: '';
+      width: 16px;
+      height: 1px;
+      background: rgba(255,255,255,0.2);
+    }
+
+    /* ── FEED ─────────────────────────────────────────── */
+    .feed {
       flex: 1;
       overflow-y: auto;
-      padding: 14px 16px;
+      padding: 16px;
       scroll-behavior: smooth;
       -webkit-overflow-scrolling: touch;
     }
 
-    .output::-webkit-scrollbar { width: 4px; }
-    .output::-webkit-scrollbar-track { background: transparent; }
-    .output::-webkit-scrollbar-thumb { background: #2a2a3a; border-radius: 3px; }
+    .feed::-webkit-scrollbar { width: 4px; }
+    .feed::-webkit-scrollbar-track { background: transparent; }
+    .feed::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
 
+    /* System lines */
     .line {
-      font-size: 14px;
+      font-size: 12px;
+      font-weight: 400;
+      font-family: 'Assistant', sans-serif;
       line-height: 1.7;
       white-space: pre-wrap;
       word-break: break-word;
-      padding: 1px 0;
+      padding: 2px 0;
+      color: var(--text-3);
     }
-
-    @media (max-width: 480px) {
-      .line { font-size: 13px; }
-    }
-
     .line.rtl { direction: rtl; text-align: right; }
     .line.ltr { direction: ltr; text-align: left; }
-    .line.welcome  { color: #38bdf8; }
-    .line.system   { color: #818cf8; }
-    .line.info     { color: #64748b; }
-    .line.separator{ color: #1e293b; }
-    .line.error    { color: #f87171; }
-    .line.default  { color: #94a3b8; }
-
-    /* News item styling */
-    .news-item {
-      display: flex;
-      align-items: flex-start;
-      gap: 10px;
-      direction: rtl;
-      padding: 12px 0;
-      border-bottom: 1px solid #1e293b;
-      animation: fadeIn 0.3s ease;
-    }
-    .news-item:last-child { border-bottom: none; }
-    @keyframes fadeIn { from{opacity:0;transform:translateY(4px)} to{opacity:1;transform:translateY(0)} }
-
-    .news-num {
-      color: #38bdf8;
-      font-size: 13px;
-      flex-shrink: 0;
-      width: 18px;
-      padding-top: 2px;
-    }
-
-    .news-body { flex: 1; min-width: 0; }
-
-    .site-badge {
-      display: inline-block;
-      background: #0f172a;
-      border: 1px solid #38bdf8;
-      color: #38bdf8;
-      font-size: 11px;
-      padding: 2px 8px;
-      border-radius: 4px;
-      margin-bottom: 5px;
-      letter-spacing: 0.3px;
-      max-width: 100%;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
-
-    .news-text {
-      color: #e2e8f0;
+    .line.system   { color: #6366f1; font-weight: 500; }
+    .line.separator{ color: var(--border); }
+    .line.error    {
       font-size: 14px;
-      line-height: 1.65;
+      font-weight: 600;
+      color: #dc2626;
       direction: rtl;
-      word-break: break-word;
+      text-align: right;
+      background: #fef2f2;
+      border: 1px solid #fecaca;
+      border-radius: 10px;
+      padding: 12px 14px;
+      margin: 6px 0;
+    }
+    .line.default  { color: var(--text-2); }
+
+    /* ── NEWS CARD ──────────────────────────────────── */
+    .news-item {
+      background: var(--card);
+      border-radius: 14px;
+      box-shadow: var(--shadow-sm);
+      padding: 16px 18px;
+      margin-bottom: 10px;
+      direction: rtl;
+      animation: card-in 0.4s cubic-bezier(0.16,1,0.3,1) both;
+      border: 1px solid rgba(0,0,0,0.04);
+      transition: box-shadow 0.2s, transform 0.2s;
+      cursor: default;
     }
 
-    @media (max-width: 480px) {
-      .news-text { font-size: 15px; }
-      .news-item { padding: 14px 0; gap: 8px; }
+    .news-item:hover {
+      box-shadow: var(--shadow-md);
+      transform: translateY(-1px);
     }
 
+    @keyframes card-in {
+      from { opacity:0; transform:translateY(10px); }
+      to   { opacity:1; transform:translateY(0); }
+    }
+
+    .card-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 10px;
+    }
+
+    .card-source-row {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+    }
+
+    .source-favicon {
+      width: 18px;
+      height: 18px;
+      border-radius: 4px;
+      flex-shrink: 0;
+      object-fit: contain;
+    }
+
+    .source-name {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-2);
+      font-family: 'Assistant', sans-serif;
+    }
+
+    .card-num {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--text-3);
+      font-family: 'Assistant', sans-serif;
+      background: var(--bg);
+      border-radius: 6px;
+      padding: 2px 8px;
+    }
+
+    .source-link {
+      text-decoration: none;
+      border-bottom: 1px dashed currentColor;
+      transition: opacity 0.15s;
+    }
+    .source-link:hover { opacity: 0.7; }
+
+    .card-headline {
+      font-size: 17px;
+      font-weight: 600;
+      line-height: 1.55;
+      color: var(--text-1);
+      direction: rtl;
+    }
+
+    /* ── LOADER ─────────────────────────────────────── */
     .loader {
       display: flex;
       align-items: center;
       gap: 12px;
       direction: rtl;
-      padding: 14px 0;
+      background: var(--card);
+      border-radius: 14px;
+      padding: 18px;
+      margin-bottom: 10px;
+      box-shadow: var(--shadow-sm);
+      border: 1px solid rgba(0,0,0,0.04);
     }
-    .loader-spinner {
-      width: 18px; height: 18px;
-      border: 2px solid #1e3a4f;
-      border-top-color: #38bdf8;
+
+    .loader-dots {
+      display: flex;
+      gap: 5px;
+    }
+
+    .loader-dots span {
+      width: 8px;
+      height: 8px;
       border-radius: 50%;
-      animation: spin 0.8s linear infinite;
-      flex-shrink: 0;
+      background: #6366f1;
+      animation: dot-bounce 1.4s ease-in-out infinite;
     }
-    @keyframes spin { to { transform: rotate(360deg); } }
-    .loader-text {
-      color: #38bdf8;
+
+    .loader-dots span:nth-child(2) { animation-delay: 0.16s; background: #2563eb; }
+    .loader-dots span:nth-child(3) { animation-delay: 0.32s; background: #059669; }
+
+    @keyframes dot-bounce {
+      0%,80%,100% { transform: scale(0.7); opacity: 0.4; }
+      40%          { transform: scale(1.1); opacity: 1;   }
+    }
+
+    .loader-label {
       font-size: 14px;
-    }
-    .loader-dots::after {
-      content: '';
-      animation: dots 1.5s steps(4, end) infinite;
-    }
-    @keyframes dots {
-      0%   { content: ''; }
-      25%  { content: '.'; }
-      50%  { content: '..'; }
-      75%  { content: '...'; }
-      100% { content: ''; }
+      font-weight: 500;
+      color: var(--text-2);
     }
 
-    .inputbar {
-      border-top: 1px solid #2a2a3a;
-      background: #0e0e18;
-      padding: 12px 14px;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
+    /* ── CATEGORY BAR ─────────────────────────────── */
+    .category-bar {
+      background: var(--card);
+      border-top: 1px solid var(--border);
+      padding: 12px 16px;
       flex-shrink: 0;
-    }
-
-    .inputbar-bottom {
-      display: flex;
-      justify-content: flex-end;
-    }
-
-    #runBtn {
-      background: #0ea5e9;
-      color: #000;
-      border: none;
-      padding: 11px 20px;
-      border-radius: 8px;
-      cursor: pointer;
-      font-family: inherit;
-      font-size: 14px;
-      font-weight: 700;
-      letter-spacing: 0.3px;
-      transition: background 0.2s, transform 0.1s;
-      flex-shrink: 0;
-      white-space: nowrap;
-      -webkit-tap-highlight-color: transparent;
-      touch-action: manipulation;
-    }
-
-    #runBtn:hover:not(:disabled) { background: #38bdf8; transform: translateY(-1px); }
-    #runBtn:active:not(:disabled) { transform: scale(0.97); }
-    #runBtn:disabled {
-      background: #0f2030;
-      color: #1e3a4f;
-      cursor: not-allowed;
-    }
-
-    @media (max-width: 480px) {
-      #runBtn { padding: 13px 22px; font-size: 15px; border-radius: 10px; }
-    }
-
-    #clearBtn {
-      background: transparent;
-      color: #475569;
-      border: 1px solid #2a2a3a;
-      padding: 11px 14px;
-      border-radius: 8px;
-      cursor: pointer;
-      font-family: inherit;
-      font-size: 13px;
-      transition: all 0.2s;
-      flex-shrink: 0;
-      white-space: nowrap;
-      -webkit-tap-highlight-color: transparent;
-      touch-action: manipulation;
-    }
-    #clearBtn:hover { border-color: #f87171; color: #f87171; }
-    #clearBtn:active { transform: scale(0.97); }
-    #clearBtn:disabled { opacity: 0.3; cursor: not-allowed; }
-
-    #clearScreenBtn {
-      background: transparent;
-      color: #475569;
-      border: 1px solid #2a2a3a;
-      padding: 4px 10px;
-      border-radius: 5px;
-      cursor: pointer;
-      font-family: inherit;
-      font-size: 11px;
-      transition: all 0.2s;
-      flex-shrink: 0;
-      white-space: nowrap;
-      -webkit-tap-highlight-color: transparent;
-      touch-action: manipulation;
-    }
-    #clearScreenBtn:hover { border-color: #38bdf8; color: #38bdf8; }
-    #clearScreenBtn:active { transform: scale(0.97); }
-
-    @media (max-width: 480px) {
-      #clearBtn { padding: 10px 14px; font-size: 13px; border-radius: 8px; }
+      box-shadow: 0 -2px 12px rgba(0,0,0,0.05);
     }
 
     .topics-grid {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
       gap: 8px;
+      margin-bottom: 10px;
     }
 
     @media (max-width: 480px) {
@@ -291,74 +364,141 @@
     }
 
     .topic-btn {
-      background: #1a1a28;
-      color: #94a3b8;
-      border: 1px solid #2a2a3a;
-      padding: 11px 8px;
-      border-radius: 8px;
+      background: var(--bg);
+      color: var(--text-2);
+      border: 1.5px solid var(--border);
+      padding: 10px 8px;
+      border-radius: 10px;
       cursor: pointer;
-      font-family: inherit;
-      font-size: 13px;
+      font-family: 'Heebo', sans-serif;
+      font-size: 14px;
+      font-weight: 500;
       direction: rtl;
-      transition: all 0.2s;
+      transition: all 0.18s;
       touch-action: manipulation;
       -webkit-tap-highlight-color: transparent;
       white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
     .topic-btn:hover:not(:disabled) {
-      background: #0f172a;
-      border-color: #38bdf8;
-      color: #e2e8f0;
+      background: #ffffff;
+      border-color: var(--active-color, #2563eb);
+      color: var(--active-color, #2563eb);
+      box-shadow: 0 0 0 3px color-mix(in srgb, var(--active-color, #2563eb) 12%, transparent);
     }
 
     .topic-btn.active {
-      background: #0f172a;
-      border-color: #38bdf8;
-      color: #38bdf8;
+      background: var(--active-color, #2563eb);
+      border-color: var(--active-color, #2563eb);
+      color: #ffffff;
+      box-shadow: 0 2px 10px color-mix(in srgb, var(--active-color, #2563eb) 40%, transparent);
     }
 
     .topic-btn:active:not(:disabled) { transform: scale(0.96); }
 
     .topic-btn:disabled {
-      opacity: 0.35;
+      opacity: 0.4;
       cursor: not-allowed;
     }
 
+    /* Per-category colors */
+    .topic-btn[data-cat="tech"]     { --active-color: var(--tech); }
+    .topic-btn[data-cat="security"] { --active-color: var(--security); }
+    .topic-btn[data-cat="sports"]   { --active-color: var(--sports); }
+    .topic-btn[data-cat="culture"]  { --active-color: var(--culture); }
+    .topic-btn[data-cat="economy"]  { --active-color: var(--economy); }
+    .topic-btn[data-cat="politics"] { --active-color: var(--politics); }
+
+    .bar-bottom {
+      display: flex;
+      justify-content: flex-end;
+    }
+
+    #clearBtn {
+      background: transparent;
+      color: var(--text-3);
+      border: 1.5px solid var(--border);
+      padding: 7px 16px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-family: 'Heebo', sans-serif;
+      font-size: 12px;
+      font-weight: 500;
+      transition: all 0.2s;
+    }
+
+    #clearBtn:hover { border-color: #dc2626; color: #dc2626; background: #fef2f2; }
+    #clearBtn:disabled { opacity: 0.3; cursor: not-allowed; }
+
+    /* Separator in feed */
+    .feed-separator {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      direction: rtl;
+      margin: 6px 0;
+    }
+
+    .feed-separator-line {
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+
+    .feed-separator-label {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-3);
+    }
+
     @media (max-width: 480px) {
-      .topic-btn { padding: 13px 6px; font-size: 13px; }
+      .brand-sub { display: none; }
+      .card-headline { font-size: 16px; }
+      .topic-btn { font-size: 13px; padding: 11px 6px; }
     }
   </style>
 </head>
 <body>
 
-<div class="window">
+<div class="app">
 
-  <div class="titlebar">
-    <div class="dots">
-      <div class="dot dot-red"></div>
-      <div class="dot dot-yellow"></div>
-      <div class="dot dot-green"></div>
+  <!-- ── HEADER ─────────────────────────────────────── -->
+  <div class="header">
+    <div class="header-main">
+      <div class="brand">
+        <div class="brand-icon">📰</div>
+        <div class="brand-text">
+          <div class="brand-name">חדשות ישראל AI</div>
+          <div class="brand-sub">Powered by Arie Goldman</div>
+        </div>
+      </div>
+      <div class="header-actions">
+        <button class="btn-clear-screen" onclick="clearScreen()">נקה מסך</button>
+        <div class="status-badge">
+          <div class="status-dot" id="statusDot"></div>
+          <span class="status-text" id="statusLabel">מוכן</span>
+        </div>
+      </div>
     </div>
-    <span class="titlebar-label">AI News Agent</span>
-    <button id="clearScreenBtn" onclick="clearScreen()">נקה מסך</button>
-    <div class="status-dot" id="statusDot"></div>
+    <div class="header-date" id="headerDate"></div>
   </div>
 
-  <div class="output" id="output">
-    <div class="line separator ltr">────────────────────────────────────────────</div>
-  </div>
+  <!-- ── FEED ──────────────────────────────────────── -->
+  <div class="feed" id="output"></div>
 
-  <div class="inputbar">
+  <!-- ── CATEGORY BAR ──────────────────────────────── -->
+  <div class="category-bar">
     <div class="topics-grid">
-      <button class="topic-btn" onclick="runSearch('חדשות טכנולוגיה', this)">💻 טכנולוגיה</button>
-      <button class="topic-btn" onclick="runSearch('חדשות ביטחוניות', this)">🛡️ ביטחון</button>
-      <button class="topic-btn" onclick="runSearch('חדשות ספורט', this)">⚽ ספורט</button>
-      <button class="topic-btn" onclick="runSearch('חדשות תרבות', this)">🎭 תרבות</button>
-      <button class="topic-btn" onclick="runSearch('חדשות כלכלה', this)">📈 כלכלה</button>
-      <button class="topic-btn" onclick="runSearch('חדשות פוליטיקה', this)">🏛️ פוליטיקה</button>
+      <button class="topic-btn" data-cat="tech"     onclick="runSearch('חדשות טכנולוגיה', this)">💻 טכנולוגיה</button>
+      <button class="topic-btn" data-cat="security" onclick="runSearch('חדשות ביטחוניות', this)">🛡️ ביטחון</button>
+      <button class="topic-btn" data-cat="sports"   onclick="runSearch('חדשות ספורט', this)">⚽ ספורט</button>
+      <button class="topic-btn" data-cat="culture"  onclick="runSearch('חדשות תרבות', this)">🎭 תרבות</button>
+      <button class="topic-btn" data-cat="economy"  onclick="runSearch('חדשות כלכלה', this)">📈 כלכלה</button>
+      <button class="topic-btn" data-cat="politics" onclick="runSearch('חדשות פוליטיקה', this)">🏛️ פוליטיקה</button>
     </div>
-    <div class="inputbar-bottom">
+    <div class="bar-bottom">
       <button id="clearBtn" onclick="clearHistory()">מחק היסטוריה</button>
     </div>
   </div>
@@ -366,93 +506,132 @@
 </div>
 
 <script>
-  const output    = document.getElementById('output');
-  const statusDot = document.getElementById('statusDot');
+  // Category color map (matches CSS vars)
+  const CAT_COLORS = {
+    tech:     '#2563eb',
+    security: '#7c3aed',
+    sports:   '#059669',
+    culture:  '#d97706',
+    economy:  '#0891b2',
+    politics: '#dc2626',
+  };
 
-  let eventSource = null;
-  let newsCount   = 0;
+  // Hebrew date
+  const now = new Date();
+  document.getElementById('headerDate').textContent =
+    now.toLocaleDateString('he-IL', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+
+  const output      = document.getElementById('output');
+  const statusDot   = document.getElementById('statusDot');
+  const statusLabel = document.getElementById('statusLabel');
+
+  let eventSource    = null;
+  let newsCount      = 0;
+  let activeCat      = null;
 
   function topicBtns() { return document.querySelectorAll('.topic-btn'); }
 
-  function isHebrew(text) {
-    return /[֐-׿]/.test(text);
-  }
+  function isHebrew(text) { return /[֐-׿]/.test(text); }
 
-  // Detect news result lines: [site.co.il] text
   function parseNewsLine(text) {
     const m = text.match(/^\[([^\]]+)\]\s+(.+)/);
-    if (m) return { site: m[1].trim(), update: m[2].trim() };
-    return null;
-  }
-
-  function appendLine(text) {
-    const news = parseNewsLine(text);
-    if (news) {
-      newsCount++;
-      const item = document.createElement('div');
-      item.className = 'news-item';
-      item.innerHTML = `
-        <div class="news-num">${newsCount}.</div>
-        <div class="news-body">
-          <div><span class="site-badge">${escapeHtml(news.site)}</span></div>
-          <div class="news-text">${escapeHtml(news.update)}</div>
-        </div>`;
-      output.appendChild(item);
-    } else {
-      const div = document.createElement('div');
-      const dir = isHebrew(text) ? 'rtl' : 'ltr';
-      div.className = `line default ${dir}`;
-
-      if (text.includes('אתרים:') || text.includes('נושא:')) div.classList.replace('default', 'system');
-      if (text.includes('===') || text.includes('───')) div.classList.replace('default', 'separator');
-      if (text.startsWith('SITES_EXHAUSTED:')) {
-        div.classList.replace('default', 'error');
-        div.textContent = text.replace('SITES_EXHAUSTED: ', '');
-        output.appendChild(div);
-        output.scrollTop = output.scrollHeight;
-        return;
-      }
-
-      div.textContent = text;
-      output.appendChild(div);
-    }
-    output.scrollTop = output.scrollHeight;
+    if (!m) return null;
+    const inner = m[1].trim();
+    const pipeIdx = inner.indexOf('|');
+    const site = pipeIdx >= 0 ? inner.slice(0, pipeIdx).trim() : inner;
+    const url  = pipeIdx >= 0 ? inner.slice(pipeIdx + 1).trim() : '';
+    return { site, url, update: m[2].trim() };
   }
 
   function escapeHtml(str) {
     return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
   }
 
+  function createLineEl(text) {
+    const news = parseNewsLine(text);
+    if (news) {
+      newsCount++;
+      const color = activeCat ? CAT_COLORS[activeCat] : '#6366f1';
+      const item = document.createElement('div');
+      item.className = 'news-item';
+      item.innerHTML = `
+        <div class="card-top">
+          <div class="card-source-row">
+            ${news.url
+              ? `<a href="${escapeHtml(news.url)}" target="_blank" rel="noopener" title="${escapeHtml(news.site)}">
+                   <img class="source-favicon"
+                        src="https://www.google.com/s2/favicons?domain=${encodeURIComponent(news.site)}&sz=32"
+                        alt="${escapeHtml(news.site)}"
+                        onerror="this.style.display='none'">
+                 </a>`
+              : `<span class="source-name">${escapeHtml(news.site)}</span>`}
+          </div>
+          <span class="card-num">${String(newsCount).padStart(2,'0')}</span>
+        </div>
+        <div class="card-headline">${escapeHtml(news.update)}</div>`;
+      return item;
+    }
+
+    // System separator
+    if (text.includes('===') || text.includes('───') || text === '') {
+      const sep = document.createElement('div');
+      sep.className = 'feed-separator';
+      sep.innerHTML = `<div class="feed-separator-line"></div>`;
+      return sep;
+    }
+
+    const div = document.createElement('div');
+    const dir = isHebrew(text) ? 'rtl' : 'ltr';
+    div.className = `line ${dir}`;
+
+    if (text.startsWith('SITES_EXHAUSTED:')) {
+      div.classList.add('error');
+      div.textContent = text.replace('SITES_EXHAUSTED: ', '');
+      return div;
+    }
+    if (text.includes('אתרים:') || text.includes('נושא:')) {
+      div.classList.add('system');
+    } else {
+      div.classList.add('default');
+    }
+    div.textContent = text;
+    return div;
+  }
+
   function setBusy(busy, activeBtn) {
-    topicBtns().forEach(b => {
-      b.disabled = busy;
-      b.classList.remove('active');
-    });
+    topicBtns().forEach(b => { b.disabled = busy; b.classList.remove('active'); });
     document.getElementById('clearBtn').disabled = busy;
-    if (busy && activeBtn) activeBtn.classList.add('active');
+    if (busy && activeBtn) {
+      activeBtn.classList.add('active');
+      activeCat = activeBtn.dataset.cat || null;
+    } else {
+      activeCat = null;
+    }
     statusDot.className = 'status-dot' + (busy ? ' busy' : '');
+    statusLabel.textContent = busy ? 'מחפש' : 'מוכן';
   }
 
   function runSearch(topic, btn) {
-    const activeBtn = btn || event?.currentTarget;
-    setBusy(true, activeBtn);
+    setBusy(true, btn || event?.currentTarget);
     newsCount = 0;
 
+    // Separator
     const sep = document.createElement('div');
-    sep.className = 'line separator ltr';
-    sep.textContent = '────────────────────────────────────────────';
+    sep.className = 'feed-separator';
+    sep.innerHTML = `
+      <div class="feed-separator-line"></div>
+      <span class="feed-separator-label">${escapeHtml(topic)}</span>
+      <div class="feed-separator-line"></div>`;
     output.appendChild(sep);
 
-    const echo = document.createElement('div');
-    echo.className = 'line system rtl';
-    echo.textContent = `❯ מחפש ${topic}...`;
-    output.appendChild(echo);
-
-    const cursorLine = document.createElement('div');
-    cursorLine.className = 'loader';
-    cursorLine.id = 'cursorLine';
-    cursorLine.innerHTML = '<div class="loader-spinner"></div><span class="loader-text">מחפש חדשות<span class="loader-dots"></span></span>';
-    output.appendChild(cursorLine);
+    // Loader card
+    const loaderEl = document.createElement('div');
+    loaderEl.className = 'loader';
+    loaderEl.id = 'cursorLine';
+    loaderEl.innerHTML = `
+      <div class="loader-dots"><span></span><span></span><span></span></div>
+      <span class="loader-label">מאסף חדשות מהמקורות...</span>`;
+    output.appendChild(loaderEl);
     output.scrollTop = output.scrollHeight;
 
     if (eventSource) { eventSource.close(); eventSource = null; }
@@ -461,24 +640,25 @@
 
     eventSource.onmessage = (e) => {
       const data = JSON.parse(e.data);
+
       if (data.done) {
         const cur = document.getElementById('cursorLine');
         if (cur) cur.remove();
 
         const done = document.createElement('div');
-        done.className = 'line welcome rtl';
-        done.textContent = `✦ הסתיים — נמצאו ${newsCount} חדשות`;
+        done.className = 'line system rtl';
+        done.textContent = `✓ הסתיים — ${newsCount} חדשות נמצאו`;
         output.appendChild(done);
-
         output.scrollTop = output.scrollHeight;
         eventSource.close();
         eventSource = null;
         setBusy(false, null);
         return;
       }
+
       if (data.line) {
         const cur = document.getElementById('cursorLine');
-        const el = createLineEl(data.line);
+        const el  = createLineEl(data.line);
         if (cur) output.insertBefore(el, cur);
         else output.appendChild(el);
         output.scrollTop = output.scrollHeight;
@@ -489,7 +669,7 @@
       const cur = document.getElementById('cursorLine');
       if (cur) cur.remove();
       const err = document.createElement('div');
-      err.className = 'line error rtl';
+      err.className = 'line error';
       err.textContent = 'שגיאה בחיבור לשרת';
       output.appendChild(err);
       if (eventSource) { eventSource.close(); eventSource = null; }
@@ -505,34 +685,6 @@
       if (cur) cur.remove();
       setBusy(false, null);
     });
-  }
-
-  function createLineEl(text) {
-    const news = parseNewsLine(text);
-    if (news) {
-      newsCount++;
-      const item = document.createElement('div');
-      item.className = 'news-item';
-      item.innerHTML = `
-        <div class="news-num">${newsCount}.</div>
-        <div class="news-body">
-          <div><span class="site-badge">${escapeHtml(news.site)}</span></div>
-          <div class="news-text">${escapeHtml(news.update)}</div>
-        </div>`;
-      return item;
-    }
-    const div = document.createElement('div');
-    const dir = isHebrew(text) ? 'rtl' : 'ltr';
-    div.className = `line default ${dir}`;
-    if (text.includes('אתרים:') || text.includes('נושא:')) div.classList.replace('default', 'system');
-    if (text.includes('===') || text.includes('───')) div.classList.replace('default', 'separator');
-    if (text.startsWith('SITES_EXHAUSTED:')) {
-      div.classList.replace('default', 'error');
-      div.textContent = text.replace('SITES_EXHAUSTED: ', '');
-      return div;
-    }
-    div.textContent = text;
-    return div;
   }
 
   function clearScreen() {
@@ -552,10 +704,6 @@
         output.scrollTop = output.scrollHeight;
       });
   }
-
-  document.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter' && !runBtn.disabled) runSearch();
-  });
 </script>
 
 </body>

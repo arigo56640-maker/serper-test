@@ -44,6 +44,7 @@ def save_to_history(topic, results):
             "date": now,
             "category": topic,
             "site": item["site"],
+            "url": item.get("url", ""),
             "update": item["update"]
         })
     with open(HISTORY_FILE, 'w', encoding='utf-8') as f:
@@ -73,7 +74,7 @@ news_agent = Agent(
     goal=f'למצוא 5 עדכוני {topic} מהאתרים הישראליים שסופקו',
     backstory=(
         'אתה עיתונאי ישראלי המחפש חדשות אך ורק מהאתרים שסופקו. '
-        'לכל חדשה חובה לציין את שם הדומיין המדויק שממנו היא נלקחה.'
+        'הכותרת עצמה חייבת להיות תוכן החדשה בלבד — אין לציין בה מי מדווח, מאיזה אתר היא נלקחה, או כל ציון מקור אחר.'
     ),
     verbose=False,
     allow_delegation=False,
@@ -87,11 +88,12 @@ news_task = Task(
         'לכל חיפוש הוסף site:שם_האתר לשאילתה.\n'
         'מצא 5 עדכונים עדכניים ושונים.\n\n'
         'פלט חובה — בדיוק 5 שורות, כל שורה בפורמט:\n'
-        'SITE: שם_הדומיין | UPDATE: תיאור העדכון במשפט אחד בעברית'
+        'SITE: שם_הדומיין | URL: קישור_מלא_לכתבה | UPDATE: תיאור העדכון במשפט אחד בעברית\n\n'
+        'חשוב: בשדה UPDATE כתוב את תוכן החדשה בלבד. אל תציין בתוכו שם אתר, ואל תכתוב ביטויים כמו "מדווח", "מפרסם", "לפי" וכו\'.'
     ),
     expected_output=(
         'בדיוק 5 שורות בפורמט:\n'
-        'SITE: ynet.co.il | UPDATE: ...\n'
+        'SITE: ynet.co.il | URL: https://www.ynet.co.il/... | UPDATE: ...\n'
         'וכן הלאה'
     ),
     agent=news_agent
@@ -109,12 +111,20 @@ result_str = str(result)
 # ─── פירוס ושמירה ─────────────────────────────────────────────────────────────
 parsed = []
 for line in result_str.split('\n'):
-    m = re.search(r'SITE[:\s]+([^\|]+)\|\s*UPDATE[:\s]+(.*)', line, re.IGNORECASE)
+    m = re.search(r'SITE[:\s]+([^\|]+)\|.*?URL[:\s]+(https?://\S+)\s*\|\s*UPDATE[:\s]+(.*)', line, re.IGNORECASE)
     if m:
         site = m.group(1).strip()
-        update = m.group(2).strip()
+        url  = m.group(2).strip()
+        update = m.group(3).strip()
         if site and update:
-            parsed.append({"site": site, "update": update})
+            parsed.append({"site": site, "url": url, "update": update})
+    else:
+        m2 = re.search(r'SITE[:\s]+([^\|]+)\|\s*UPDATE[:\s]+(.*)', line, re.IGNORECASE)
+        if m2:
+            site = m2.group(1).strip()
+            update = m2.group(2).strip()
+            if site and update:
+                parsed.append({"site": site, "url": "", "update": update})
 
 if parsed:
     save_to_history(topic, parsed)
@@ -125,6 +135,7 @@ print("=" * 50, flush=True)
 
 if parsed:
     for item in parsed:
-        print(f"[{item['site']}] {item['update']}", flush=True)
+        url_part = f"|{item['url']}" if item.get('url') else ""
+        print(f"[{item['site']}{url_part}] {item['update']}", flush=True)
 else:
     print(result_str, flush=True)
