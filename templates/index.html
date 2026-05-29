@@ -481,6 +481,26 @@
 </div>
 
 <script>
+  // Hebrew site name map
+  const SITE_NAMES_HE = {
+    'ynet.co.il':        'ינט',
+    'walla.co.il':       'וואלה',
+    'mako.co.il':        'מאקו',
+    'n12.co.il':         'N12',
+    'kan.org.il':        'כאן',
+    'maariv.co.il':      'מעריב',
+    'haaretz.co.il':     'הארץ',
+    'israelhayom.co.il': 'ישראל היום',
+    'sport5.co.il':      'ספורט 5',
+    'one.co.il':         'ONE',
+    'calcalist.co.il':   'כלכליסט',
+    'geektime.co.il':    'גיקטיים',
+    'techtime.co.il':    'טקטיים',
+    'themarker.com':     'דה מרקר',
+    'globes.co.il':      'גלובס',
+    'bizportal.co.il':   'ביזפורטל',
+  };
+
   // Category color map (matches CSS vars)
   const CAT_COLORS = {
     tech:     '#2563eb',
@@ -534,13 +554,14 @@
         <div class="card-top">
           <div class="card-source-row">
             ${news.url
-              ? `<a href="${escapeHtml(news.url)}" target="_blank" rel="noopener" title="${escapeHtml(news.site)}">
+              ? `<a href="${escapeHtml(news.url)}" target="_blank" rel="noopener" class="source-link" style="display:flex;align-items:center;gap:6px;color:var(--text-2);text-decoration:none;">
                    <img class="source-favicon"
                         src="https://www.google.com/s2/favicons?domain=${encodeURIComponent(news.site)}&sz=32"
                         alt="${escapeHtml(news.site)}"
                         onerror="this.style.display='none'">
+                   <span class="source-name">${escapeHtml(SITE_NAMES_HE[news.site] || news.site)}</span>
                  </a>`
-              : `<span class="source-name">${escapeHtml(news.site)}</span>`}
+              : `<span class="source-name">${escapeHtml(SITE_NAMES_HE[news.site] || news.site)}</span>`}
           </div>
           <span class="card-num">${String(newsCount).padStart(2,'0')}</span>
         </div>

@@ -73,7 +73,7 @@ seen_by_site = get_seen_articles_by_site(history, topic)
 print(f"נושא: {topic}", flush=True)
 print(f"אתרים: {', '.join(sites_to_search)}", flush=True)
 
-search_tool = SerperDevTool()
+search_tool = SerperDevTool(tbs="qdr:d")
 
 # ─── בניית רשימת כתבות שיש להימנע מהן ───────────────────────────────────────
 avoid_section = ""
@@ -101,12 +101,14 @@ news_agent = Agent(
     tools=[search_tool]
 )
 
+today_str = datetime.now().strftime("%d/%m/%Y")
 sites_list = '\n'.join(f'- {s}' for s in sites_to_search)
 news_task = Task(
     description=(
-        f'חפש {topic} עדכניות אך ורק מהאתרים הבאים:\n{sites_list}\n\n'
+        f'היום הוא {today_str}. חפש {topic} עדכניות מהיום בלבד אך ורק מהאתרים הבאים:\n{sites_list}\n\n'
         'לכל חיפוש הוסף site:שם_האתר לשאילתה.\n'
-        'מצא 5 עדכונים עדכניים ושונים — כתבה אחת בלבד מכל אתר.\n\n'
+        'מצא 5 עדכונים מהיום ושונים — כתבה אחת בלבד מכל אתר.\n'
+        f'אם כתבה אינה מתאריך {today_str} — דלג עליה ואל תכלול אותה בפלט.\n\n'
         'פלט חובה — בדיוק 5 שורות, כל שורה בפורמט:\n'
         'SITE: שם_הדומיין | URL: קישור_מלא_לכתבה | UPDATE: תיאור העדכון במשפט אחד בעברית\n\n'
         'חשוב: בשדה UPDATE כתוב את תוכן החדשה בלבד. אל תציין בתוכו שם אתר, ואל תכתוב ביטויים כמו "מדווח", "מפרסם", "לפי" וכו\'.'
