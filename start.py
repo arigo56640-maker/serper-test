@@ -30,10 +30,22 @@ def load_history():
     return []
 
 
-def get_available_sites(history, topic):
-    used = {item['site'] for item in history if item.get('category') == topic}
-    all_sites = SITES_BY_TOPIC.get(topic, list(SITES_BY_TOPIC.values())[0])
-    return [s for s in all_sites if s not in used]
+def get_sites_for_topic(topic):
+    return SITES_BY_TOPIC.get(topic, list(SITES_BY_TOPIC.values())[0])[:5]
+
+
+def get_seen_articles_by_site(history, topic):
+    """Returns {site: [update, ...]} for all previously saved articles for this topic."""
+    seen = {}
+    for item in history:
+        if item.get('category') == topic:
+            site = item['site']
+            seen.setdefault(site, []).append(item['update'])
+    return seen
+
+
+def is_duplicate_article(history, site, update):
+    return any(i.get('site') == site and i.get('update') == update for i in history)
 
 
 def save_to_history(topic, results):
@@ -55,18 +67,26 @@ def save_to_history(topic, results):
 topic = sys.argv[1] if len(sys.argv) > 1 else "חדשות טכנולוגיה"
 
 history = load_history()
-available_sites = get_available_sites(history, topic)
-
-if not available_sites:
-    print(f"SITES_EXHAUSTED: כל האתרים עבור '{topic}' כבר נוצלו. לחץ 'מחק היסטוריה' לאיפוס.", flush=True)
-    sys.exit(0)
-
-sites_to_search = available_sites[:5]
+sites_to_search = get_sites_for_topic(topic)
+seen_by_site = get_seen_articles_by_site(history, topic)
 
 print(f"נושא: {topic}", flush=True)
 print(f"אתרים: {', '.join(sites_to_search)}", flush=True)
 
 search_tool = SerperDevTool()
+
+# ─── בניית רשימת כתבות שיש להימנע מהן ───────────────────────────────────────
+avoid_section = ""
+if seen_by_site:
+    lines = []
+    for site in sites_to_search:
+        if site in seen_by_site:
+            quoted = ", ".join(f'"{h}"' for h in seen_by_site[site])
+            lines.append(f"- {site}: {quoted}")
+    if lines:
+        avoid_section = (
+            "\n\nכתבות שכבר הוצגו — אין לחזור עליהן:\n" + "\n".join(lines)
+        )
 
 # ─── סוכן חדשות ──────────────────────────────────────────────────────────────
 news_agent = Agent(
@@ -86,10 +106,11 @@ news_task = Task(
     description=(
         f'חפש {topic} עדכניות אך ורק מהאתרים הבאים:\n{sites_list}\n\n'
         'לכל חיפוש הוסף site:שם_האתר לשאילתה.\n'
-        'מצא 5 עדכונים עדכניים ושונים.\n\n'
+        'מצא 5 עדכונים עדכניים ושונים — כתבה אחת בלבד מכל אתר.\n\n'
         'פלט חובה — בדיוק 5 שורות, כל שורה בפורמט:\n'
         'SITE: שם_הדומיין | URL: קישור_מלא_לכתבה | UPDATE: תיאור העדכון במשפט אחד בעברית\n\n'
         'חשוב: בשדה UPDATE כתוב את תוכן החדשה בלבד. אל תציין בתוכו שם אתר, ואל תכתוב ביטויים כמו "מדווח", "מפרסם", "לפי" וכו\'.'
+        + avoid_section
     ),
     expected_output=(
         'בדיוק 5 שורות בפורמט:\n'
@@ -108,8 +129,8 @@ crew = Crew(
 result = crew.kickoff()
 result_str = str(result)
 
-# ─── פירוס ושמירה ─────────────────────────────────────────────────────────────
-parsed = []
+# ─── פירוס ───────────────────────────────────────────────────────────────────
+parsed_raw = []
 for line in result_str.split('\n'):
     m = re.search(r'SITE[:\s]+([^\|]+)\|.*?URL[:\s]+(https?://\S+)\s*\|\s*UPDATE[:\s]+(.*)', line, re.IGNORECASE)
     if m:
@@ -117,14 +138,26 @@ for line in result_str.split('\n'):
         url  = m.group(2).strip()
         update = m.group(3).strip()
         if site and update:
-            parsed.append({"site": site, "url": url, "update": update})
+            parsed_raw.append({"site": site, "url": url, "update": update})
     else:
         m2 = re.search(r'SITE[:\s]+([^\|]+)\|\s*UPDATE[:\s]+(.*)', line, re.IGNORECASE)
         if m2:
             site = m2.group(1).strip()
             update = m2.group(2).strip()
             if site and update:
-                parsed.append({"site": site, "url": "", "update": update})
+                parsed_raw.append({"site": site, "url": "", "update": update})
+
+# ─── ניקוי כפילויות: כתבה אחת לאתר לכל הרצה, ואין חזרה על כתבה שהופיעה בעבר ─
+seen_sites_this_run = set()
+parsed = []
+for item in parsed_raw:
+    site = item["site"]
+    if site in seen_sites_this_run:
+        continue
+    if is_duplicate_article(history, site, item["update"]):
+        continue
+    seen_sites_this_run.add(site)
+    parsed.append(item)
 
 if parsed:
     save_to_history(topic, parsed)

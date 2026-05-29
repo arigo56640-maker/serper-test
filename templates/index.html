@@ -411,27 +411,6 @@
     .topic-btn[data-cat="economy"]  { --active-color: var(--economy); }
     .topic-btn[data-cat="politics"] { --active-color: var(--politics); }
 
-    .bar-bottom {
-      display: flex;
-      justify-content: flex-end;
-    }
-
-    #clearBtn {
-      background: transparent;
-      color: var(--text-3);
-      border: 1.5px solid var(--border);
-      padding: 7px 16px;
-      border-radius: 8px;
-      cursor: pointer;
-      font-family: 'Heebo', sans-serif;
-      font-size: 12px;
-      font-weight: 500;
-      transition: all 0.2s;
-    }
-
-    #clearBtn:hover { border-color: #dc2626; color: #dc2626; background: #fef2f2; }
-    #clearBtn:disabled { opacity: 0.3; cursor: not-allowed; }
-
     /* Separator in feed */
     .feed-separator {
       display: flex;
@@ -454,7 +433,6 @@
     }
 
     @media (max-width: 480px) {
-      .brand-sub { display: none; }
       .card-headline { font-size: 16px; }
       .topic-btn { font-size: 13px; padding: 11px 6px; }
     }
@@ -475,7 +453,7 @@
         </div>
       </div>
       <div class="header-actions">
-        <button class="btn-clear-screen" onclick="clearScreen()">נקה מסך</button>
+        <button class="btn-clear-screen" onclick="clearMemory()">נקה זיכרון</button>
         <div class="status-badge">
           <div class="status-dot" id="statusDot"></div>
           <span class="status-text" id="statusLabel">מוכן</span>
@@ -497,9 +475,6 @@
       <button class="topic-btn" data-cat="culture"  onclick="runSearch('חדשות תרבות', this)">🎭 תרבות</button>
       <button class="topic-btn" data-cat="economy"  onclick="runSearch('חדשות כלכלה', this)">📈 כלכלה</button>
       <button class="topic-btn" data-cat="politics" onclick="runSearch('חדשות פוליטיקה', this)">🏛️ פוליטיקה</button>
-    </div>
-    <div class="bar-bottom">
-      <button id="clearBtn" onclick="clearHistory()">מחק היסטוריה</button>
     </div>
   </div>
 
@@ -528,6 +503,7 @@
   let eventSource    = null;
   let newsCount      = 0;
   let activeCat      = null;
+  let hasSearched    = false;
 
   function topicBtns() { return document.querySelectorAll('.topic-btn'); }
 
@@ -600,7 +576,6 @@
 
   function setBusy(busy, activeBtn) {
     topicBtns().forEach(b => { b.disabled = busy; b.classList.remove('active'); });
-    document.getElementById('clearBtn').disabled = busy;
     if (busy && activeBtn) {
       activeBtn.classList.add('active');
       activeCat = activeBtn.dataset.cat || null;
@@ -612,6 +587,8 @@
   }
 
   function runSearch(topic, btn) {
+    if (hasSearched) { output.innerHTML = ''; newsCount = 0; }
+    hasSearched = true;
     setBusy(true, btn || event?.currentTarget);
     newsCount = 0;
 
@@ -630,7 +607,7 @@
     loaderEl.id = 'cursorLine';
     loaderEl.innerHTML = `
       <div class="loader-dots"><span></span><span></span><span></span></div>
-      <span class="loader-label">מאסף חדשות מהמקורות...</span>`;
+      <span class="loader-label">בודק אתרי חדשות...</span>`;
     output.appendChild(loaderEl);
     output.scrollTop = output.scrollHeight;
 
@@ -687,22 +664,12 @@
     });
   }
 
-  function clearScreen() {
-    output.innerHTML = '';
-  }
-
-  function clearHistory() {
-    fetch('/clear-history', { method: 'DELETE' })
-      .then(r => r.json())
-      .then(data => {
-        const div = document.createElement('div');
-        div.className = 'line system rtl';
-        div.textContent = data.status === 'deleted'
-          ? '✓ ההיסטוריה נמחקה — כל האתרים זמינים שוב'
-          : '— לא נמצא קובץ היסטוריה';
-        output.appendChild(div);
-        output.scrollTop = output.scrollHeight;
-      });
+  function clearMemory() {
+    fetch('/clear-history', { method: 'DELETE' }).then(() => {
+      output.innerHTML = '';
+      newsCount = 0;
+      hasSearched = false;
+    });
   }
 </script>
 
