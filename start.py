@@ -63,114 +63,124 @@ def save_to_history(topic, results):
         json.dump(history, f, ensure_ascii=False, indent=2)
 
 
-# ─── קבלת נושא ───────────────────────────────────────────────────────────────
-topic = sys.argv[1] if len(sys.argv) > 1 else "חדשות טכנולוגיה"
+def run_news_agent(topic):
+    """מריץ את סוכן החדשות עבור הנושא. מחזיר (parsed, result_str).
+    parsed = רשימת dict עם site/url/update (לאחר ניקוי כפילויות ושמירה להיסטוריה).
+    """
+    history = load_history()
+    sites_to_search = get_sites_for_topic(topic)
+    seen_by_site = get_seen_articles_by_site(history, topic)
 
-history = load_history()
-sites_to_search = get_sites_for_topic(topic)
-seen_by_site = get_seen_articles_by_site(history, topic)
+    print(f"נושא: {topic}", flush=True)
+    print(f"אתרים: {', '.join(sites_to_search)}", flush=True)
 
-print(f"נושא: {topic}", flush=True)
-print(f"אתרים: {', '.join(sites_to_search)}", flush=True)
+    search_tool = SerperDevTool(tbs="qdr:d")
 
-search_tool = SerperDevTool(tbs="qdr:d")
+    # ─── בניית רשימת כתבות שיש להימנע מהן ───────────────────────────────────────
+    avoid_section = ""
+    if seen_by_site:
+        lines = []
+        for site in sites_to_search:
+            if site in seen_by_site:
+                quoted = ", ".join(f'"{h}"' for h in seen_by_site[site])
+                lines.append(f"- {site}: {quoted}")
+        if lines:
+            avoid_section = (
+                "\n\nכתבות שכבר הוצגו — אין לחזור עליהן:\n" + "\n".join(lines)
+            )
 
-# ─── בניית רשימת כתבות שיש להימנע מהן ───────────────────────────────────────
-avoid_section = ""
-if seen_by_site:
-    lines = []
-    for site in sites_to_search:
-        if site in seen_by_site:
-            quoted = ", ".join(f'"{h}"' for h in seen_by_site[site])
-            lines.append(f"- {site}: {quoted}")
-    if lines:
-        avoid_section = (
-            "\n\nכתבות שכבר הוצגו — אין לחזור עליהן:\n" + "\n".join(lines)
-        )
+    # ─── סוכן חדשות ──────────────────────────────────────────────────────────────
+    news_agent = Agent(
+        role='עיתונאי ישראלי',
+        goal=f'למצוא 5 עדכוני {topic} מהאתרים הישראליים שסופקו',
+        backstory=(
+            'אתה עיתונאי ישראלי המחפש חדשות אך ורק מהאתרים שסופקו. '
+            'הכותרת עצמה חייבת להיות תוכן החדשה בלבד — אין לציין בה מי מדווח, מאיזה אתר היא נלקחה, או כל ציון מקור אחר.'
+        ),
+        verbose=False,
+        allow_delegation=False,
+        tools=[search_tool]
+    )
 
-# ─── סוכן חדשות ──────────────────────────────────────────────────────────────
-news_agent = Agent(
-    role='עיתונאי ישראלי',
-    goal=f'למצוא 5 עדכוני {topic} מהאתרים הישראליים שסופקו',
-    backstory=(
-        'אתה עיתונאי ישראלי המחפש חדשות אך ורק מהאתרים שסופקו. '
-        'הכותרת עצמה חייבת להיות תוכן החדשה בלבד — אין לציין בה מי מדווח, מאיזה אתר היא נלקחה, או כל ציון מקור אחר.'
-    ),
-    verbose=False,
-    allow_delegation=False,
-    tools=[search_tool]
-)
+    today_str = datetime.now().strftime("%d/%m/%Y")
+    sites_list = '\n'.join(f'- {s}' for s in sites_to_search)
+    news_task = Task(
+        description=(
+            f'היום הוא {today_str}. חפש {topic} עדכניות מהיום בלבד אך ורק מהאתרים הבאים:\n{sites_list}\n\n'
+            'לכל חיפוש הוסף site:שם_האתר לשאילתה.\n'
+            'מצא 5 עדכונים מהיום ושונים — כתבה אחת בלבד מכל אתר.\n'
+            f'אם כתבה אינה מתאריך {today_str} — דלג עליה ואל תכלול אותה בפלט.\n\n'
+            'פלט חובה — בדיוק 5 שורות, כל שורה בפורמט:\n'
+            'SITE: שם_הדומיין | URL: קישור_מלא_לכתבה | UPDATE: תיאור העדכון במשפט אחד בעברית\n\n'
+            'חשוב: בשדה UPDATE כתוב את תוכן החדשה בלבד. אל תציין בתוכו שם אתר, ואל תכתוב ביטויים כמו "מדווח", "מפרסם", "לפי" וכו\'.'
+            + avoid_section
+        ),
+        expected_output=(
+            'בדיוק 5 שורות בפורמט:\n'
+            'SITE: ynet.co.il | URL: https://www.ynet.co.il/... | UPDATE: ...\n'
+            'וכן הלאה'
+        ),
+        agent=news_agent
+    )
 
-today_str = datetime.now().strftime("%d/%m/%Y")
-sites_list = '\n'.join(f'- {s}' for s in sites_to_search)
-news_task = Task(
-    description=(
-        f'היום הוא {today_str}. חפש {topic} עדכניות מהיום בלבד אך ורק מהאתרים הבאים:\n{sites_list}\n\n'
-        'לכל חיפוש הוסף site:שם_האתר לשאילתה.\n'
-        'מצא 5 עדכונים מהיום ושונים — כתבה אחת בלבד מכל אתר.\n'
-        f'אם כתבה אינה מתאריך {today_str} — דלג עליה ואל תכלול אותה בפלט.\n\n'
-        'פלט חובה — בדיוק 5 שורות, כל שורה בפורמט:\n'
-        'SITE: שם_הדומיין | URL: קישור_מלא_לכתבה | UPDATE: תיאור העדכון במשפט אחד בעברית\n\n'
-        'חשוב: בשדה UPDATE כתוב את תוכן החדשה בלבד. אל תציין בתוכו שם אתר, ואל תכתוב ביטויים כמו "מדווח", "מפרסם", "לפי" וכו\'.'
-        + avoid_section
-    ),
-    expected_output=(
-        'בדיוק 5 שורות בפורמט:\n'
-        'SITE: ynet.co.il | URL: https://www.ynet.co.il/... | UPDATE: ...\n'
-        'וכן הלאה'
-    ),
-    agent=news_agent
-)
+    crew = Crew(
+        agents=[news_agent],
+        tasks=[news_task],
+        process=Process.sequential
+    )
 
-crew = Crew(
-    agents=[news_agent],
-    tasks=[news_task],
-    process=Process.sequential
-)
+    result = crew.kickoff()
+    result_str = str(result)
 
-result = crew.kickoff()
-result_str = str(result)
-
-# ─── פירוס ───────────────────────────────────────────────────────────────────
-parsed_raw = []
-for line in result_str.split('\n'):
-    m = re.search(r'SITE[:\s]+([^\|]+)\|.*?URL[:\s]+(https?://\S+)\s*\|\s*UPDATE[:\s]+(.*)', line, re.IGNORECASE)
-    if m:
-        site = m.group(1).strip()
-        url  = m.group(2).strip()
-        update = m.group(3).strip()
-        if site and update:
-            parsed_raw.append({"site": site, "url": url, "update": update})
-    else:
-        m2 = re.search(r'SITE[:\s]+([^\|]+)\|\s*UPDATE[:\s]+(.*)', line, re.IGNORECASE)
-        if m2:
-            site = m2.group(1).strip()
-            update = m2.group(2).strip()
+    # ─── פירוס ───────────────────────────────────────────────────────────────────
+    parsed_raw = []
+    for line in result_str.split('\n'):
+        m = re.search(r'SITE[:\s]+([^\|]+)\|.*?URL[:\s]+(https?://\S+)\s*\|\s*UPDATE[:\s]+(.*)', line, re.IGNORECASE)
+        if m:
+            site = m.group(1).strip()
+            url  = m.group(2).strip()
+            update = m.group(3).strip()
             if site and update:
-                parsed_raw.append({"site": site, "url": "", "update": update})
+                parsed_raw.append({"site": site, "url": url, "update": update})
+        else:
+            m2 = re.search(r'SITE[:\s]+([^\|]+)\|\s*UPDATE[:\s]+(.*)', line, re.IGNORECASE)
+            if m2:
+                site = m2.group(1).strip()
+                update = m2.group(2).strip()
+                if site and update:
+                    parsed_raw.append({"site": site, "url": "", "update": update})
 
-# ─── ניקוי כפילויות: כתבה אחת לאתר לכל הרצה, ואין חזרה על כתבה שהופיעה בעבר ─
-seen_sites_this_run = set()
-parsed = []
-for item in parsed_raw:
-    site = item["site"]
-    if site in seen_sites_this_run:
-        continue
-    if is_duplicate_article(history, site, item["update"]):
-        continue
-    seen_sites_this_run.add(site)
-    parsed.append(item)
+    # ─── ניקוי כפילויות: כתבה אחת לאתר לכל הרצה, ואין חזרה על כתבה שהופיעה בעבר ─
+    seen_sites_this_run = set()
+    parsed = []
+    for item in parsed_raw:
+        site = item["site"]
+        if site in seen_sites_this_run:
+            continue
+        if is_duplicate_article(history, site, item["update"]):
+            continue
+        seen_sites_this_run.add(site)
+        parsed.append(item)
 
-if parsed:
-    save_to_history(topic, parsed)
+    if parsed:
+        save_to_history(topic, parsed)
 
-print("\n" + "=" * 50, flush=True)
-print(f"{topic}:", flush=True)
-print("=" * 50, flush=True)
+    return parsed, result_str
 
-if parsed:
-    for item in parsed:
-        url_part = f"|{item['url']}" if item.get('url') else ""
-        print(f"[{item['site']}{url_part}] {item['update']}", flush=True)
-else:
-    print(result_str, flush=True)
+
+if __name__ == "__main__":
+    # ─── קבלת נושא ───────────────────────────────────────────────────────────────
+    topic = sys.argv[1] if len(sys.argv) > 1 else "חדשות טכנולוגיה"
+
+    parsed, result_str = run_news_agent(topic)
+
+    print("\n" + "=" * 50, flush=True)
+    print(f"{topic}:", flush=True)
+    print("=" * 50, flush=True)
+
+    if parsed:
+        for item in parsed:
+            url_part = f"|{item['url']}" if item.get('url') else ""
+            print(f"[{item['site']}{url_part}] {item['update']}", flush=True)
+    else:
+        print(result_str, flush=True)
